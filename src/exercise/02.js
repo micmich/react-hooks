@@ -2,20 +2,23 @@
 // http://localhost:3000/isolated/exercise/02.js
 
 import * as React from 'react'
+import useLocalStorage from './useSth.js'
 
 function Greeting({initialName = ''}) {
-  // 🐨 initialize the state to the value from localStorage
-  // 💰 window.localStorage.getItem('name') ?? initialName
-  const [name, setName] = React.useState(() => ( window.localStorage.getItem('name') || initialName ))
+  // // 🐨 initialize the state to the value from localStorage
+  // // 💰 window.localStorage.getItem('name') ?? initialName
+  // const [name, setName] = React.useState(() => ( window.localStorage.getItem('name') || initialName ))
 
-  // 🐨 Here's where you'll use `React.useEffect`.
-  // The callback should set the `name` in localStorage.
-  // 💰 window.localStorage.setItem('name', name)
+  // // 🐨 Here's where you'll use `React.useEffect`.
+  // // The callback should set the `name` in localStorage.
+  // // 💰 window.localStorage.setItem('name', name)
 
-  React.useEffect(() => {
-    console.log('Called API');
-    window.localStorage.setItem('name', name);
-  }, [name]);
+  // React.useEffect(() => {
+  //   console.log('Called API');
+  //   window.localStorage.setItem('name', name);
+  // }, [name]);
+
+  const [name, setName] = useLocalStorage({ storageName: 'name1' })
 
   function handleChange(event) {
     const name = event.target.value;
