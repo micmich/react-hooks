@@ -5,7 +5,7 @@ import * as React from 'react'
 
 function Board() {
   // 🐨 squares is the state for this component. Add useState for squares
-  const squares = Array(9).fill(null)
+  const [squares, setSquares] = React.useState(() => { return Array(9).fill(null) });
 
   // 🐨 We'll need the following bits of derived state:
   // - nextValue ('X' or 'O')
@@ -31,11 +31,19 @@ function Board() {
     // 💰 `squaresCopy[square] = nextValue`
     //
     // 🐨 set the squares to your copy
+
+    if (!squares[square] && !calculateWinner(squares)) {
+      const result = [...squares];
+      result[square] = calculateNextValue(squares);
+      setSquares(result);
+    }
+
   }
 
   function restart() {
     // 🐨 reset the squares
     // 💰 `Array(9).fill(null)` will do it!
+    setSquares(Array(9).fill(null));
   }
 
   function renderSquare(i) {
@@ -49,7 +57,7 @@ function Board() {
   return (
     <div>
       {/* 🐨 put the status in the div below */}
-      <div className="status">STATUS</div>
+      <div className="status">STATUS {calculateStatus(calculateWinner(squares), squares, calculateNextValue(squares))} </div>
       <div className="board-row">
         {renderSquare(0)}
         {renderSquare(1)}
