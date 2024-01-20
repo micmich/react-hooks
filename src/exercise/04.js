@@ -3,7 +3,6 @@
 
 import * as React from 'react'
 import useLocalStorage from './useSth.js'
-import useLocalStorage from './useSth.js'
 
 function Board() {
 
