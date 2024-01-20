@@ -3,6 +3,7 @@
 
 import * as React from 'react'
 import useLocalStorage from './useSth.js'
+import useLocalStorage from './useSth.js'
 
 function Board() {
 
@@ -17,6 +18,7 @@ function Board() {
 
   // React.useEffect(() => {
   //   window.localStorage.setItem('ticTacToe', JSON.stringify(squares));
+
   // }, [squares]);
 
   // 🐨 We'll need the following bits of derived state:
