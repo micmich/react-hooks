@@ -2,18 +2,22 @@
 // http://localhost:3000/isolated/exercise/04.js
 
 import * as React from 'react'
+import useLocalStorage from './useSth.js'
 
 function Board() {
-  // 🐨 squares is the state for this component. Add useState for squares
-  const [squares, setSquares] = React.useState(() => { 
-    const stored = window.localStorage.getItem('ticTacToe');
-    return (stored ? JSON.parse(stored) : null) ?? Array(9).fill(null);
-  });
 
-  React.useEffect(() => {
-    window.localStorage.setItem('ticTacToe', JSON.stringify(squares));
+  const [squares, setSquares] = useLocalStorage({ storageName: 'ticTacToe', initialValue: [Array(9).fill(null)]});
+  const [index, setIndex] = useLocalStorage({ storageName: 'ticTacToeIdx', initialValue: 0 });
 
-  }, [squares]);
+  // // 🐨 squares is the state for this component. Add useState for squares
+  // const [squares, setSquares] = React.useState(() => { 
+  //   const stored = window.localStorage.getItem('ticTacToe');
+  //   return (stored ? JSON.parse(stored) : null) ?? Array(9).fill(null);
+  // });
+
+  // React.useEffect(() => {
+  //   window.localStorage.setItem('ticTacToe', JSON.stringify(squares));
+  // }, [squares]);
 
   // 🐨 We'll need the following bits of derived state:
   // - nextValue ('X' or 'O')
@@ -21,6 +25,31 @@ function Board() {
   // - status (`Winner: ${winner}`, `Scratch: Cat's game`, or `Next player: ${nextValue}`)
   // 💰 I've written the calculations for you! So you can use my utilities
   // below to create these variables
+
+  function currSQ() {
+    return squares[index]
+  }
+
+  function atEnd() {
+    return index === (squares.length - 1);
+  }
+
+  function atFirst() {
+    return index === 0;
+  }
+
+  function gotoPrevIdx() {
+    setIndex((idx) => idx -1 )
+  }
+
+  function gotoNextIdx() {
+    setIndex((idx) => {
+      if (idx + 1 < squares.length) {
+        return idx + 1;
+      }
+      return idx;
+    })
+  }
 
   // This is the function your square click handler will call. `square` should
   // be an index. So if they click the center square, this will be `4`.
@@ -40,10 +69,17 @@ function Board() {
     //
     // 🐨 set the squares to your copy
 
-    if (!squares[square] && !calculateWinner(squares)) {
-      const result = [...squares];
-      result[square] = calculateNextValue(squares);
-      setSquares(result);
+    if (!currSQ()[square] && !calculateWinner(currSQ())) {
+
+      let history = [...squares];
+      if (!atEnd()) {
+        history = history.slice(0, index + 1);
+      }
+      
+      let altered = [...currSQ()];
+      altered[square] = calculateNextValue(altered);
+      setSquares([...history, altered]);
+      setIndex((idx) => idx + 1)
     }
 
   }
@@ -51,13 +87,14 @@ function Board() {
   function restart() {
     // 🐨 reset the squares
     // 💰 `Array(9).fill(null)` will do it!
-    setSquares(Array(9).fill(null));
+    setSquares([Array(9).fill(null)]);
+    setIndex(0);
   }
 
   function renderSquare(i) {
     return (
       <button className="square" onClick={() => selectSquare(i)}>
-        {squares[i]}
+        {currSQ()[i]}
       </button>
     )
   }
@@ -65,7 +102,7 @@ function Board() {
   return (
     <div>
       {/* 🐨 put the status in the div below */}
-      <div className="status">STATUS {calculateStatus(calculateWinner(squares), squares, calculateNextValue(squares))} </div>
+      <div className="status">STATUS {calculateStatus(calculateWinner(currSQ()), currSQ(), calculateNextValue(currSQ()))} </div>
       <div className="board-row">
         {renderSquare(0)}
         {renderSquare(1)}
@@ -84,6 +121,10 @@ function Board() {
       <button className="restart" onClick={restart}>
         restart
       </button>
+      <div style={{marginTop: '3px'}} >
+        <button disabled={atFirst()} onClick={gotoPrevIdx}>&lt;</button>
+        <button disabled={atEnd()} onClick={gotoNextIdx}>&gt;</button>
+      </div>
     </div>
   )
 }
