@@ -8,73 +8,114 @@ import * as React from 'react'
 // PokemonDataView: the stuff we use to display the pokemon info
 import {PokemonForm, fetchPokemon, PokemonInfoFallback, PokemonDataView } from '../pokemon'
 
+const actionTypes = {
+  POKEMON_REQUEST: 'POKEMON_REQUEST',
+  POKEMON_FAILED: 'POKEMON_FAILED',
+  POKEMON_FOUND: 'POKEMON_FOUND'
+}
+
+function reducer(state, action) {
+
+  switch (action.type) {
+    case actionTypes.POKEMON_REQUEST: {
+      return {
+        showInvitation: false,
+        showPokemonData: null,
+        showProgressFor: action.pokemonName,
+        showErrorMessage: null
+      }
+    }
+    case actionTypes.POKEMON_FOUND: {
+      return {
+        showInvitation: false,
+        showPokemonData: action.pokemonData,
+        showProgressFor: null,
+        showErrorMessage: null
+      }
+    }
+    case actionTypes.POKEMON_FAILED: {
+      return {
+        showInvitation: false,
+        showPokemonData: null,
+        showProgressFor: null,
+        showErrorMessage: action.errorMessage
+      }
+    }
+    default: {
+      throw new Error(`Unknown action.type:${action.type}`);
+    }
+  }
+}
+
+
+
 function PokemonInfo({pokemonName}) {
 
-  const states = {
-    idle: 'idle',
-    pending: 'pending',
-    resolved: 'resolved',
-    rejected:  'rejected',
+  const initialState = {
+    showInvitation: true,
+    showPokemonData: null,
+    showProgressFor: null,
+    showErrorMessage: null
   }
 
-  const [componentStatus, setComponentStatus] = React.useState(states.idle);
-  const [pokemonData, setPokemonData] = React.useState(null);
-  const [pokemonFailure, setPokemonFailure] = React.useState(null);
-  const prevRequestName = React.useRef(pokemonName);
+  const [state, dispatch] = React.useReducer(reducer, initialState)
+  const prevRequestPokemonName = React.useRef(pokemonName);
 
   React.useEffect(() => {
-    let applyResponse = true;
-    async function execFetch() {
+    let applyAPIResults = true;
+
+    async function getDataAndDispatch() {     
       try {
-        prevRequestName.current = pokemonName;
+        dispatch({ type: actionTypes.POKEMON_REQUEST, pokemonName: pokemonName })
+        prevRequestPokemonName.current = pokemonName;
         const pokemonData = await fetchPokemon(pokemonName);
-        if (!applyResponse) return;
-        setPokemonData(pokemonData);
-        setComponentStatus(states.resolved);
+        if (!applyAPIResults) return;
+        dispatch({ type: actionTypes.POKEMON_FOUND, pokemonData: pokemonData })
       } catch (e) {
-        if (!applyResponse) return;
-        console.error("Response", e);
-        setComponentStatus(states.rejected);
-        setPokemonData(null);
-        setPokemonFailure(e.message);
+        if (!applyAPIResults) return;
+        dispatch({ type: actionTypes.POKEMON_FAILED, errorMessage: e.message })
       }
     }
 
-    if (!pokemonName) {
-      console.log("skipping empty pokemonName");
-      return;
-    }
-    if (prevRequestName.current === pokemonName) {
-      console.log("Pokemon name already retrieved:", pokemonName);
-      return;
-    }
+    if (!pokemonName) return;
+    if (pokemonName === prevRequestPokemonName.current) return;
 
-    console.log("Retrieving pokemon:", pokemonName)
-    setPokemonData(null);
-    setPokemonFailure(null);
-    execFetch();
-    setComponentStatus(states.pending);  
+    getDataAndDispatch();
+    return () => { applyAPIResults = false; }
 
-    return () => { 
-      applyResponse = false; 
-    }
+  }, [pokemonName])
 
-  }, [pokemonName]);
 
-  if (componentStatus === states.idle) {
-    return "Submit a pokemon"
-  }
-  if (componentStatus === states.pending) {
-    return <PokemonInfoFallback name={pokemonName} />
-  }
-  if (componentStatus === states.rejected) {
-    return <div role="alert">
-            There was an error: <pre style={{whiteSpace: 'normal'}}>{pokemonFailure}</pre>
+return (
+  <>
+    {state.showInvitation && "Submit a pokemon"}
+    {state.showProgressFor && <PokemonInfoFallback name={state.showProgressFor} /> }
+    {state.showPokemonData && <PokemonDataView pokemon={state.showPokemonData} /> }
+    {state.showErrorMessage && (
+      <div role="alert">
+            There was an error: <pre style={{whiteSpace: 'normal'}}>{state.showErrorMessage}</pre>
           </div>
-  }
-  return (
-    <PokemonDataView pokemon={pokemonData} />
-  )
+    )}
+  </>
+)
+
+  // if (state.showInvitation) {
+
+  // }
+
+  // if (componentStatus === states.idle) {
+  // }
+  // if (componentStatus === states.pending) {
+  //   return <PokemonInfoFallback name={pokemonName} />
+  // }
+  // if (componentStatus === states.rejected) {
+  //   return <div role="alert">
+  //           There was an error: <pre style={{whiteSpace: 'normal'}}>{pokemonFailure}</pre>
+  //         </div>
+  // }
+  // return (
+  //   <PokemonDataView pokemon={pokemonData} />
+  // )
 
   // 🐨 Have state for the pokemon (null)
   // 🐨 use React.useEffect where the callback should be called whenever the
