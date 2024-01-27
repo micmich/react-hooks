@@ -2,11 +2,14 @@
 // http://localhost:3000/isolated/exercise/06.js
 
 import * as React from 'react'
+import { ErrorBoundary } from "react-error-boundary";
 // 🐨 you'll want the following additional things from '../pokemon':
 // fetchPokemon: the function we call to get the pokemon info
 // PokemonInfoFallback: the thing we show while we're loading the pokemon info
 // PokemonDataView: the stuff we use to display the pokemon info
 import {PokemonForm, fetchPokemon, PokemonInfoFallback, PokemonDataView } from '../pokemon'
+
+
 
 const actionTypes = {
   POKEMON_REQUEST: 'POKEMON_REQUEST',
@@ -65,16 +68,16 @@ function PokemonInfo({pokemonName}) {
     let applyAPIResults = true;
 
     async function getDataAndDispatch() {     
-      try {
+      // try {
         dispatch({ type: actionTypes.POKEMON_REQUEST, pokemonName: pokemonName })
         prevRequestPokemonName.current = pokemonName;
         const pokemonData = await fetchPokemon(pokemonName);
         if (!applyAPIResults) return;
         dispatch({ type: actionTypes.POKEMON_FOUND, pokemonData: pokemonData })
-      } catch (e) {
-        if (!applyAPIResults) return;
-        dispatch({ type: actionTypes.POKEMON_FAILED, errorMessage: e.message })
-      }
+      // } catch (e) {
+      //   if (!applyAPIResults) return;
+      //   dispatch({ type: actionTypes.POKEMON_FAILED, errorMessage: e.message })
+      // }
     }
 
     if (!pokemonName) return;
@@ -87,17 +90,19 @@ function PokemonInfo({pokemonName}) {
 
 
 return (
-  <>
+  <ErrorBoundary>
     {state.showInvitation && "Submit a pokemon"}
     {state.showProgressFor && <PokemonInfoFallback name={state.showProgressFor} /> }
     {state.showPokemonData && <PokemonDataView pokemon={state.showPokemonData} /> }
     {state.showErrorMessage && (
       <div role="alert">
             There was an error: <pre style={{whiteSpace: 'normal'}}>{state.showErrorMessage}</pre>
-          </div>
+        </div>
     )}
-  </>
+  </ErrorBoundary>
 )
+
+
 
   // if (state.showInvitation) {
 
