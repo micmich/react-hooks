@@ -11,28 +11,32 @@ import {PokemonForm, fetchPokemon, PokemonInfoFallback, PokemonDataView } from '
 function PokemonInfo({pokemonName}) {
 
   const [pokemonData, setPokemonData] = React.useState(null);
+  const [pokemonFailure, setPokemonFailure] = React.useState(null);
   const prevRequestName = React.useRef(pokemonName);
 
   React.useEffect(() => {
     let applyResponse = true;
     async function execFetch() {
       try {
+        setPokemonFailure(null);
         const pokemonData = await fetchPokemon(pokemonName);
         if (!applyResponse) return;
         setPokemonData(pokemonData);
       } catch (e) {
         console.error("Response", e);
         setPokemonData(null);
+        setPokemonFailure(e.message);
       }
     }
+
     if (prevRequestName.current === pokemonName) {
       return;
     }
-
     prevRequestName.current = pokemonName;
+    
     setPokemonData(null);
-
     execFetch();
+
     return () => { 
       setPokemonData(null);
       applyResponse = false; 
@@ -41,12 +45,19 @@ function PokemonInfo({pokemonName}) {
   }, [pokemonName]);
 
   if (!pokemonName) {
-    return "Enter pokemon name"
+    return "Submit a pokemon"
   }
   if (!pokemonData) {
-    console.log('No pokemonData', pokemonName);
+    console.log('No pokemonData', pokemonName, "Failure?", pokemonFailure);
     return (
-      <PokemonInfoFallback name={pokemonName} />
+      <>
+        <PokemonInfoFallback name={pokemonName} />
+        { Boolean(pokemonFailure) && (
+          <div role="alert">
+            There was an error: <pre style={{whiteSpace: 'normal'}}>{pokemonFailure}</pre>
+          </div>
+        )}
+      </>
     )
   }
   return (
