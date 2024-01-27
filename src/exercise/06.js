@@ -11,22 +11,42 @@ import {PokemonForm, fetchPokemon, PokemonInfoFallback, PokemonDataView } from '
 function PokemonInfo({pokemonName}) {
 
   const [pokemonData, setPokemonData] = React.useState(null);
+  const prevRequestName = React.useRef(pokemonName);
 
   React.useEffect(() => {
     let applyResponse = true;
     async function execFetch() {
-      const pokemonData = await fetchPokemon('pikachu');
-      if (!applyResponse) return;
-      setPokemonData(pokemonData);
+      try {
+        const pokemonData = await fetchPokemon(pokemonName);
+        if (!applyResponse) return;
+        setPokemonData(pokemonData);
+      } catch (e) {
+        console.error("Response", e);
+        setPokemonData(null);
+      }
     }
+    if (prevRequestName.current === pokemonName) {
+      return;
+    }
+
+    prevRequestName.current = pokemonName;
+    setPokemonData(null);
+
     execFetch();
-    return () => { applyResponse = false; }
+    return () => { 
+      setPokemonData(null);
+      applyResponse = false; 
+    }
 
-  }, []);
+  }, [pokemonName]);
 
+  if (!pokemonName) {
+    return "Enter pokemon name"
+  }
   if (!pokemonData) {
+    console.log('No pokemonData', pokemonName);
     return (
-      <PokemonInfoFallback name='pikachu?' />
+      <PokemonInfoFallback name={pokemonName} />
     )
   }
   return (
