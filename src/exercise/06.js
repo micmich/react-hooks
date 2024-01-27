@@ -10,6 +10,14 @@ import {PokemonForm, fetchPokemon, PokemonInfoFallback, PokemonDataView } from '
 
 function PokemonInfo({pokemonName}) {
 
+  const states = {
+    idle: 'idle',
+    pending: 'pending',
+    resolved: 'resolved',
+    rejected:  'rejected',
+  }
+
+  const [componentStatus, setComponentStatus] = React.useState(states.idle);
   const [pokemonData, setPokemonData] = React.useState(null);
   const [pokemonFailure, setPokemonFailure] = React.useState(null);
   const prevRequestName = React.useRef(pokemonName);
@@ -18,47 +26,51 @@ function PokemonInfo({pokemonName}) {
     let applyResponse = true;
     async function execFetch() {
       try {
-        setPokemonFailure(null);
+        prevRequestName.current = pokemonName;
         const pokemonData = await fetchPokemon(pokemonName);
         if (!applyResponse) return;
         setPokemonData(pokemonData);
+        setComponentStatus(states.resolved);
       } catch (e) {
+        if (!applyResponse) return;
         console.error("Response", e);
+        setComponentStatus(states.rejected);
         setPokemonData(null);
         setPokemonFailure(e.message);
       }
     }
 
-    if (prevRequestName.current === pokemonName) {
+    if (!pokemonName) {
+      console.log("skipping empty pokemonName");
       return;
     }
-    prevRequestName.current = pokemonName;
-    
+    if (prevRequestName.current === pokemonName) {
+      console.log("Pokemon name already retrieved:", pokemonName);
+      return;
+    }
+
+    console.log("Retrieving pokemon:", pokemonName)
     setPokemonData(null);
+    setPokemonFailure(null);
     execFetch();
+    setComponentStatus(states.pending);  
 
     return () => { 
-      setPokemonData(null);
       applyResponse = false; 
     }
 
   }, [pokemonName]);
 
-  if (!pokemonName) {
+  if (componentStatus === states.idle) {
     return "Submit a pokemon"
   }
-  if (!pokemonData) {
-    console.log('No pokemonData', pokemonName, "Failure?", pokemonFailure);
-    return (
-      <>
-        <PokemonInfoFallback name={pokemonName} />
-        { Boolean(pokemonFailure) && (
-          <div role="alert">
+  if (componentStatus === states.pending) {
+    return <PokemonInfoFallback name={pokemonName} />
+  }
+  if (componentStatus === states.rejected) {
+    return <div role="alert">
             There was an error: <pre style={{whiteSpace: 'normal'}}>{pokemonFailure}</pre>
           </div>
-        )}
-      </>
-    )
   }
   return (
     <PokemonDataView pokemon={pokemonData} />
