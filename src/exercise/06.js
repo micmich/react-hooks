@@ -2,7 +2,7 @@
 // http://localhost:3000/isolated/exercise/06.js
 
 import * as React from 'react'
-import { ErrorBoundary } from "react-error-boundary";
+import { useErrorHandler, ErrorBoundary } from "react-error-boundary";
 // 🐨 you'll want the following additional things from '../pokemon':
 // fetchPokemon: the function we call to get the pokemon info
 // PokemonInfoFallback: the thing we show while we're loading the pokemon info
@@ -62,26 +62,31 @@ function PokemonInfo({pokemonName}) {
   }
 
   const [state, dispatch] = React.useReducer(reducer, initialState)
-  const prevRequestPokemonName = React.useRef(pokemonName);
+  const prevRequestPokemonName = React.useRef();
+  const handleError = useErrorHandler()
 
   React.useEffect(() => {
     let applyAPIResults = true;
-
+    console.log("useEffect()", pokemonName)
     async function getDataAndDispatch() {     
-      // try {
+      try {
         dispatch({ type: actionTypes.POKEMON_REQUEST, pokemonName: pokemonName })
         prevRequestPokemonName.current = pokemonName;
         const pokemonData = await fetchPokemon(pokemonName);
         if (!applyAPIResults) return;
         dispatch({ type: actionTypes.POKEMON_FOUND, pokemonData: pokemonData })
-      // } catch (e) {
-      //   if (!applyAPIResults) return;
-      //   dispatch({ type: actionTypes.POKEMON_FAILED, errorMessage: e.message })
-      // }
+      } catch (e) {
+        if (!applyAPIResults) return;
+        // dispatch({ type: actionTypes.POKEMON_FAILED, errorMessage: e.message })
+        handleError(e);
+      }
     }
 
     if (!pokemonName) return;
-    if (pokemonName === prevRequestPokemonName.current) return;
+    if (pokemonName === prevRequestPokemonName.current) {
+      console.log("Already dispatched");
+      return;
+    }
 
     getDataAndDispatch();
     return () => { applyAPIResults = false; }
@@ -89,8 +94,8 @@ function PokemonInfo({pokemonName}) {
   }, [pokemonName])
 
 
-return (
-  <ErrorBoundary>
+return ( console.log("rerender") ||
+  <>
     {state.showInvitation && "Submit a pokemon"}
     {state.showProgressFor && <PokemonInfoFallback name={state.showProgressFor} /> }
     {state.showPokemonData && <PokemonDataView pokemon={state.showPokemonData} /> }
@@ -99,7 +104,7 @@ return (
             There was an error: <pre style={{whiteSpace: 'normal'}}>{state.showErrorMessage}</pre>
         </div>
     )}
-  </ErrorBoundary>
+  </>
 )
 
 
@@ -141,6 +146,8 @@ return (
   // 💣 remove this
 }
 
+
+
 function App() {
   const [pokemonName, setPokemonName] = React.useState('')
 
@@ -152,9 +159,15 @@ function App() {
     <div className="pokemon-info-app">
       <PokemonForm pokemonName={pokemonName} onSubmit={handleSubmit} />
       <hr />
-      <div className="pokemon-info">
-        <PokemonInfo pokemonName={pokemonName} />
-      </div>
+      <ErrorBoundary key={pokemonName} fallback={
+          <div role="alert">
+            There was an error: <pre style={{whiteSpace: 'normal'}}></pre>
+          </div>
+      }>
+        <div className="pokemon-info">
+          <PokemonInfo pokemonName={pokemonName} />
+        </div>
+      </ErrorBoundary>
     </div>
   )
 }
