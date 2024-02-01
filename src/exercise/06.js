@@ -146,7 +146,13 @@ return ( console.log("rerender") ||
   // 💣 remove this
 }
 
-
+function PokemonError({pokemonName, error}) {
+  return (
+  <div role="alert">
+    There was an error{ pokemonName ? `for: ${pokemonName}`: ""}: <pre style={{whiteSpace: 'normal'}}>{error.message}</pre>
+  </div>
+  )
+}
 
 function App() {
   const [pokemonName, setPokemonName] = React.useState('')
@@ -159,11 +165,7 @@ function App() {
     <div className="pokemon-info-app">
       <PokemonForm pokemonName={pokemonName} onSubmit={handleSubmit} />
       <hr />
-      <ErrorBoundary key={pokemonName} fallback={
-          <div role="alert">
-            There was an error: <pre style={{whiteSpace: 'normal'}}></pre>
-          </div>
-      }>
+      <ErrorBoundary key={pokemonName} FallbackComponent={PokemonError} >
         <div className="pokemon-info">
           <PokemonInfo pokemonName={pokemonName} />
         </div>
